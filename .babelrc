@@ -1,0 +1,21 @@
+{
+  "presets": [
+    "react-app"
+  ],
+  "plugins": [
+    [
+      "module-resolver",
+      {
+        "root": ["./"],
+        "alias": {
+          "components": "./src/components",
+          "assets": "./src/assets",
+          "modules": "./src/redux/modules",
+          "store": "./src/redux/store",
+          "utils": "./src/utils",
+          "models": "./src/redux/models"
+        }
+      }
+    ]
+  ]
+}
