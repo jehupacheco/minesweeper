@@ -86,7 +86,7 @@ class Tile extends PureComponent {
     return (
       opened ?
         <span>
-          {value ? '*' : getNumberMinesAround(table, columns, rows, index)}
+          {value ? '*' : (getNumberMinesAround(table, columns, rows, index) || '')}
         </span>
         :
         <Button
