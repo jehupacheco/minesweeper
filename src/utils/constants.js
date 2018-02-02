@@ -1,7 +1,7 @@
 export const levels = {
-  easy: 0.3,
-  medium: 0.5,
-  hard: 0.8,
+  easy: 0.1,
+  medium: 0.3,
+  hard: 0.6,
 };
 
 export const tileSize = 20;

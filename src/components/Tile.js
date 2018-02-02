@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import styled from 'styled-components';
 import { addPendingMines, setPhase, updateTile } from 'modules/table';
 import { tileSize } from 'utils/constants';
-import { getNumberMinesAround } from 'utils/helpers';
 
 const StyledTile = styled.div`
   align-items: center;
@@ -29,13 +28,10 @@ const Button = styled.button`
 class Tile extends PureComponent {
   static propTypes = {
     value: PropTypes.number.isRequired,
-    index: PropTypes.number.isRequired,
-    columns: PropTypes.number.isRequired,
-    rows: PropTypes.number.isRequired,
-    table: PropTypes.arrayOf(PropTypes.number).isRequired,
     lostGame: PropTypes.bool.isRequired,
     marked: PropTypes.bool.isRequired,
     opened: PropTypes.bool.isRequired,
+    minesAround: PropTypes.number.isRequired,
     incrementMines: PropTypes.func.isRequired,
     decrementMines: PropTypes.func.isRequired,
     lose: PropTypes.func.isRequired,
@@ -57,7 +53,7 @@ class Tile extends PureComponent {
     if (e.button === 0) {
       toggleTile(!marked);
 
-      if (value) {
+      if (!marked && value) {
         lose();
       }
     } else if (e.button === 2) {
@@ -74,11 +70,8 @@ class Tile extends PureComponent {
   renderValue = () => {
     const {
       value,
-      table,
-      columns,
-      rows,
-      index,
       lostGame,
+      minesAround,
       opened,
       marked,
     } = this.props;
@@ -86,7 +79,7 @@ class Tile extends PureComponent {
     return (
       opened ?
         <span>
-          {value ? '*' : (getNumberMinesAround(table, columns, rows, index) || '')}
+          {value ? '*' : (minesAround || '')}
         </span>
         :
         <Button
@@ -124,10 +117,8 @@ class Tile extends PureComponent {
 
 export default connect(
   (state, props) => ({
-    columns: state.get('columns'),
-    rows: state.get('rows'),
-    table: state.get('table'),
     lostGame: state.get('gamePhase') === 'lose',
+    minesAround: state.get('minesAround')[props.index],
     marked: state.get('tiles').get(props.index).get('marked'),
     opened: state.get('tiles').get(props.index).get('opened'),
   }),

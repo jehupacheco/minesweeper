@@ -1,7 +1,8 @@
 import { Record, List } from 'immutable';
-import Tile from 'models/Tile';
 import _ from 'lodash';
+import Tile from 'models/Tile';
 import { levels } from 'utils/constants';
+import { getNumberMinesAround, getBlankArea } from 'utils/helpers';
 
 const InitialState = new Record({
   rows: 0,
@@ -9,6 +10,7 @@ const InitialState = new Record({
   level: 'easy',
   gamePhase: 'intro',
   table: [],
+  minesAround: [],
   pendingMines: 0,
   tiles: List(),
 });
@@ -58,14 +60,25 @@ const shuffleTable = (state) => {
   const level = state.get('level');
   const numMines = Math.floor(columns * rows * levels[level]);
   const numSafeTiles = (columns * rows) - numMines;
+  const table = (
+    _.shuffle(_.range(numMines).map(() => 1)
+      .concat(_.range(numSafeTiles).map(() => 0)))
+  );
 
-  return _.shuffle(_.range(numMines).map(() => 1).concat(_.range(numSafeTiles).map(() => 0)));
+  return {
+    table,
+    tiles: List(table.map(() => new Tile())),
+    minesAround: table.map((value, index) => getNumberMinesAround(table, columns, rows, index)),
+  };
 };
 
 const updatePhaseHelper = (state, action) => {
   if (action.value === 'play') {
-    const table = shuffleTable(state);
-    const tiles = List(table.map(() => new Tile()));
+    const {
+      table,
+      tiles,
+      minesAround,
+    } = shuffleTable(state);
 
     return (
       state
@@ -73,10 +86,28 @@ const updatePhaseHelper = (state, action) => {
         .set('table', table)
         .set('pendingMines', table.filter(m => m).length)
         .set('tiles', tiles)
+        .set('minesAround', minesAround)
     );
   }
 
   return state.set('gamePhase', action.value);
+};
+
+const updateTileHelper = (state, { key, index, value }) => {
+  const minesAround = state.get('minesAround');
+  const table = state.get('table');
+  const columns = state.get('columns');
+  const rows = state.get('rows');
+
+  if (key === 'opened' && value && minesAround[index] === 0 && !table[index]) {
+    const area = getBlankArea(minesAround, columns, rows, index);
+
+    return area.reduce((currentState, areaIndex) => (
+      currentState.update('tiles', tiles => tiles.update(areaIndex, tile => tile.set('opened', true)))
+    ), state);
+  }
+
+  return state.update('tiles', tiles => tiles.update(index, tile => tile.set(key, value)));
 };
 
 export default function tableReducer(state = new InitialState(), action) {
@@ -90,11 +121,21 @@ export default function tableReducer(state = new InitialState(), action) {
     case ADD_PENDING_MINES:
       return state.update('pendingMines', mines => mines + action.value);
     case UPDATE_TILE:
-      return state.update('tiles', tiles => tiles.update(action.index, tile => tile.set(action.key, action.value)));
+      return updateTileHelper(state, action);
     case RETRY_GAME: {
-      const table = shuffleTable(state);
+      const {
+        table,
+        tiles,
+        minesAround,
+      } = shuffleTable(state);
 
-      return state.set('table', table).set('tiles', List(table.map(() => new Tile()))).set('gamePhase', 'play');
+      return (
+        state
+          .set('table', table)
+          .set('tiles', tiles)
+          .set('gamePhase', 'play')
+          .set('minesAround', minesAround)
+      );
     }
     default:
       return state;
