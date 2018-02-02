@@ -69,6 +69,7 @@ const shuffleTable = (state) => {
     table,
     tiles: List(table.map(() => new Tile())),
     minesAround: table.map((value, index) => getNumberMinesAround(table, columns, rows, index)),
+    numMines,
   };
 };
 
@@ -78,13 +79,14 @@ const updatePhaseHelper = (state, action) => {
       table,
       tiles,
       minesAround,
+      numMines,
     } = shuffleTable(state);
 
     return (
       state
         .set('gamePhase', action.value)
         .set('table', table)
-        .set('pendingMines', table.filter(m => m).length)
+        .set('pendingMines', numMines)
         .set('tiles', tiles)
         .set('minesAround', minesAround)
     );
@@ -127,6 +129,7 @@ export default function tableReducer(state = new InitialState(), action) {
         table,
         tiles,
         minesAround,
+        numMines,
       } = shuffleTable(state);
 
       return (
@@ -135,6 +138,7 @@ export default function tableReducer(state = new InitialState(), action) {
           .set('tiles', tiles)
           .set('gamePhase', 'play')
           .set('minesAround', minesAround)
+          .set('pendingMines', numMines)
       );
     }
     default:
